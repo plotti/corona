@@ -25,7 +25,7 @@ def main():
     st.sidebar.markdown("# Infos")
     st.sidebar.markdown("### Diese App versucht vorauszuagen ob die Krankenhausbetten bei aktueller Ansteckungsquote auch in Zukunft reichen.")
     st.sidebar.markdown("Die Infektions-Daten kommen tagesaktuell von https://github.com/CSSEGISandData/COVID-19")
-    st.sidebar.markdown("Die Anzahl der verfügbaren Betten sowie die Hospitalisierungsquote wurde aus Tageszeitungen entnommen.")
+    st.sidebar.markdown("Die Schätzung der verfügbaren Betten sowie die Hospitalisierungsquote wurde aus Tageszeitungen entnommen.")
     st.sidebar.markdown("Autor: plotti@gmx.net")
     country = st.selectbox("Land",("Switzerland","Germany","Austria","France","Poland"))
     periods = st.slider('Voraussage für wieviele Tage?', 0, 50, 20)

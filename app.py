@@ -10,8 +10,6 @@ import requests
 from matplotlib import pyplot as plt
 import plotly.offline as py
 import plotly.graph_objs as go
-import locale
-locale.setlocale(locale.LC_ALL, 'de_DE')
 
 INFOS = {"inhabitants": {"Germany":80000000, "Switzerland": 6000000, "France":65000000, "Austria": 9000000, "Poland": 37000000},
          "beds": {'Andorra': 6,

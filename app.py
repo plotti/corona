@@ -12,28 +12,69 @@ import plotly.offline as py
 import plotly.graph_objs as go
 
 INFOS = {"inhabitants": {"Germany":80000000, "Switzerland": 6000000, "France":65000000, "Austria": 9000000, "Poland": 37000000},
-         "beds": {"Switzerland":2000, "Germany":30000, "France": 30000, "Poland": 15000, "Austria": 4000},
+         "beds": {'Andorra': 6,
+                  'Austria': 1833,
+                  'Belgium': 1755,
+                  'Bulgaria': 913,
+                  'Croatia': 650,
+                  'Cyprus': 92,
+                  'Czech Republic': 1227,
+                  'Denmark': 372,
+                  'Estonia': 196,
+                  'Finland': 329,
+                  'France': 7540,
+                  'Germany': 23890,
+                  'Greece': 680,
+                  'Hungary': 1374,
+                  'Iceland': 29,
+                  'Ireland': 289,
+                  'Italy': 7550,
+                  'Latvia': 217,
+                  'Lithuania': 502,
+                  'Luxembourg': 127,
+                  'The Netherlands': 1065,
+                  'Norway': 395,
+                  'Poland': 2635,
+                  'Portugal': 451,
+                  'Romania': 4574,
+                  'Slovakia': 500,
+                  'Slovenia': 131,
+                  'Spain': 4479,
+                  'Sweden': 550,
+                  'Switzerland': 866,
+                  'UK': 4114},
          "counter_measures_dates": {"Germany":dt.datetime(2020,3,14), "Switzerland": dt.datetime(2020,3,14), "France":dt.datetime(2020,3,14), "Austria": dt.datetime(2020,3,14), "Poland": dt.datetime(2020,3,14)}}
 
 def load_data():
     df = pd.read_csv(io.StringIO(requests.get("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv").content.decode('utf-8')))
     return df
 
+def get_beds():
+    beds = pd.read_html("https://link.springer.com/article/10.1007/s00134-012-2627-8/tables/2")
+    beds = beds[0]
+    tmp = beds[["Â","Critical care beds"]]
+    tmp.columns = ["country","beds"]
+    tmp.index = tmp["country"]
+    tmp = tmp[["beds"]]
+    return tmp.T.to_dict("records")
+
 def main():
+    st.AppName = "Corona Beds"
     df_raw = load_data()
     st.markdown("# Corona - Wie lange reichen die Betten?")
     st.sidebar.markdown("# Infos")
     st.sidebar.markdown("### Diese App versucht vorauszuagen ob die Krankenhausbetten bei aktueller Ansteckungsquote auch in Zukunft reichen.")
-    st.sidebar.markdown("Die Infektions-Daten kommen tagesaktuell von https://github.com/CSSEGISandData/COVID-19")
-    st.sidebar.markdown("Die Schätzung der verfügbaren Betten sowie die Hospitalisierungsquote wurde aus Tageszeitungen entnommen.")
+    st.sidebar.markdown("Die Infektions-Daten kommen tagesaktuell von der [JHU CSSE](https://github.com/CSSEGISandData/COVID-19)")
+    st.sidebar.markdown("Die Schätzung der verfügbaren Betten in Europa wurde [hier](https://link.springer.com/article/10.1007/s00134-012-2627-8) entommen. Die durchschnittliche Hospitalisierungsquote [hier](https://youtu.be/Fx11Y4xjDwA).")
+    st.sidebar.markdown("Bei der Voraussage wird ein logistisches Wachstum mit Kapazitätsgrenze (totale Anzahl Infektionen) angenommen.")
     st.sidebar.markdown("Autor: plotti@gmx.net")
-    country = st.selectbox("Land",("Switzerland","Germany","Austria","France","Poland"))
+    country = st.selectbox("Land",tuple(INFOS["beds"].keys()),index=tuple(INFOS["beds"].keys()).index("Switzerland"))
     periods = st.slider('Voraussage für wieviele Tage?', 0, 50, 20)
-    max_hospitalbeds = st.slider('Anzahl verfügbare Betten %s ' % country, 0, int(INFOS["beds"][country]), int(INFOS["beds"][country]/2))
-    percentage = st.slider('Wieviel Prozent aller Infizierten müssen ins Spital?', 0, 20, 5)
+    max_hospitalbeds = st.slider('Anzahl verfügbare Betten in %s ' % country, 0, int(INFOS["beds"][country]*2), int(INFOS["beds"][country]))
+    percentage = st.slider('Wieviel Prozent aller Infizierten müssen ins Spital? (Hospitalisierungsquote)', 0, 20, 5)
     max_infections  = int(max_hospitalbeds / (percentage/100))
     st.markdown("Maximal mögliche Anzahl an infizierten Fälle bei %s Prozent Hospitalisierungsquote: ** %s ** " % (percentage,max_infections))
-    max_cases = st.slider('Geschätzte totale Anzahl an Infektionen in %s ' % country, max_infections, int(3*max_infections), int(max_infections*1.5))
+    max_cases = st.slider('Ihre Annahme: Geschätzte totale Anzahl an Infektionen in %s ' % country, max_infections, int(3*max_infections), int(max_infections*1.5))
 
     if st.button('Berechnung beginnen'):
         df = df_raw
@@ -140,13 +181,14 @@ def plot_volatility(dataframe,max_infections):
                 ])
             ),          
             rangeslider=dict(
-                visible = True
+                visible = False
             ),
             type='date'
         ),        
         showlegend = True)
 
     fig = go.Figure(data=data, layout=layout)
+    fig.layout.update(legend=dict(x=0.1, y=.5))
     return st.plotly_chart(fig)
 
 if __name__ == "__main__":

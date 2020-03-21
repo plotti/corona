@@ -10,6 +10,8 @@ import requests
 from matplotlib import pyplot as plt
 import plotly.offline as py
 import plotly.graph_objs as go
+import locale
+locale.setlocale(locale.LC_ALL, 'de_DE')
 
 INFOS = {"inhabitants": {"Germany":80000000, "Switzerland": 6000000, "France":65000000, "Austria": 9000000, "Poland": 37000000},
          "beds": {'Andorra': 6,
@@ -159,7 +161,6 @@ def plot_volatility(dataframe,max_infections):
     data = [lower_bound, upper_bound,trace1, trace2,trace3,trace4]
 
     layout = go.Layout(
-        yaxis=dict(title='Anazl Infektionen'),
         title='Voraussage über die Anzahl an Infektionen',
         hovermode = 'closest',
         xaxis=dict(
@@ -184,11 +185,14 @@ def plot_volatility(dataframe,max_infections):
                 visible = False
             ),
             type='date'
-        ),        
+        ),     
+        legend=dict(orientation="h"),
         showlegend = True)
 
     fig = go.Figure(data=data, layout=layout)
-    fig.layout.update(legend=dict(x=0.1, y=.5))
+    fig.layout.update(legend=dict(orientation="h"),
+        separators=",.",
+        dragmode=False,)
     return st.plotly_chart(fig)
 
 if __name__ == "__main__":

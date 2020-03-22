@@ -117,7 +117,7 @@ def main():
     max_infections  = int(max_hospitalbeds / (percentage/100))
     most_current_date, cases_up_till_today = get_cases_to_date(df_raw,country)
     st.info("Bei %s Prozent Hospitalisierungsrate ist ab ** %s ** Infektionen die Kapazität der Spitäler überschritten." % (percentage,max_infections))
-    max_cases = st.slider('Schritt 3 - Passen Sie an: Wieviele Infektionen wird es insgesammt in %s geben? (Stand %s %s: %s)' % (country_loc,country_loc,most_current_date.strftime("%d.%m.%y"),cases_up_till_today), int(max_infections*0.5), int(3*max_infections), int(max_infections*1.5))
+    max_cases = st.slider('Schritt 3 - Passen Sie an: Wieviele Infektionen wird es insgesammt in %s geben? (Stand %s %s: %s)' % (country_loc,country_loc,most_current_date.strftime("%d.%m.%y"),cases_up_till_today), int(max_infections), int(3*max_infections), int(max_infections*1.5))
 
     if st.button('Berechnung beginnen'):
         with st.spinner('Vorausage wird berechnet.'):

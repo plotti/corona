@@ -137,6 +137,7 @@ def main():
     else:
         st.write('')
 
+@st.cache(show_spinner=False)
 def predict(df,periods,max_cases):
     m = Prophet(mcmc_samples=50,growth='logistic').fit(df);
     future = m.make_future_dataframe(periods=periods,freq='d')

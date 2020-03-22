@@ -59,19 +59,19 @@ def main():
     st.sidebar.markdown("Bei der Voraussage wird ein logistisches Wachstum mit Kapazitätsgrenze angenommen (siehe Schritt 4).")
     st.sidebar.markdown("Es wird unrealistischer Weise angenommen, dass hospitalisierte Infizierte gleichmässig auf alle Intensivstationen des Landes verteilt werden können.")
     st.sidebar.markdown("Die Dunkelziffer der Infektionen kann um ein vielfaches höher als die positiv getesteten Fälle sein.")
-    st.sidebar.markdown("Es wird unrealistischer Weise angenommen, dass alle Intensiv-Betten durch Corona Patienten belegt werden.")
+    st.sidebar.markdown("Es wird unrealistischer Weise angenommen, dass alle Intensivstation-Betten durch Corona Patienten belegt werden.")
     st.sidebar.markdown(":warning: [staythefuckhome](https://twitter.com/hashtag/staythefuckhome)")
     st.sidebar.markdown("Autor: :blond-haired-man: plotti@gmx.net [Github](https://github.com/plotti/corona)")
     country_loc = st.selectbox("Land",tuple(INFOS["names"].values()),index=tuple(INFOS["names"].keys()).index("Switzerland"))
     country = reverse_countries[country_loc]
-    max_hospitalbeds = st.slider('Schritt 1 - Passen Sie an: Wieviel verfügbare Intensiv-Betten hat %s ?' % country_loc, 0, int(INFOS["beds"][country]*2), int(INFOS["beds"][country]))
+    max_hospitalbeds = st.slider('Schritt 1 - Passen Sie an: Wieviel verfügbare Intensivstation-Betten hat %s ?' % country_loc, 0, int(INFOS["beds"][country]*2), int(INFOS["beds"][country]))
     #periods = st.slider('Voraussage für wieviele Tage?', 0, 50, 20)
     periods = 20
     #duration = 14 # 5 days in intensive care
     percentage = st.slider('Schritt 2 - Passen Sie an: Wieviel Prozent aller Neuinfizierten müssen in %s auf die Intensivstation? ' % country_loc, 0, 5, 1)
-    duration = st.slider('Schritt 3 - Passen Sie an: Wie viele Tage verbleiben Personen auf der Intensivstation? ', 2, 14, 10)
+    duration = st.slider('Schritt 3 - Passen Sie an: Wie viele Tage verbleiben Personen auf der Intensivstation? ', 2, 21, 10)
     most_current_date, cases_up_till_today = get_cases_to_date(df_raw,country)
-    max_cases = st.slider('Schritt 4 - Passen Sie an: Wie viele Infektionen wird es insgesamt in %s geben? (Stand %s %s: %s)' % (country_loc,country_loc,most_current_date.strftime("%d.%m.%y"),cases_up_till_today), int(cases_up_till_today), int(3*cases_up_till_today), int(cases_up_till_today*1.5))
+    max_cases = st.slider('Schritt 4 - Passen Sie an: Wie viele Infektionen wird es insgesamt in %s geben? (Stand %s %s: %s)' % (country_loc,country_loc,most_current_date.strftime("%d.%m.%y"),cases_up_till_today), int(cases_up_till_today), int(4*cases_up_till_today), int(cases_up_till_today*1.5))
     if st.button('Berechnung beginnen'):
         with st.spinner('Vo­r­aus­sa­ge wird berechnet.'):
             df = df_raw

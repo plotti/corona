@@ -101,12 +101,16 @@ def main():
     st.AppName = "Corona Beds"
     df_raw = load_data()
     st.markdown("# :hospital: Corona - Wie lange reichen die Betten in den Intensivstationen?")
-    st.sidebar.markdown("# Infos")
-    st.sidebar.markdown("Diese App ermöglicht es Ihnen Annahmen zu treffen und aufgrund derer vorauszuagen, ob die Betten in den Intensivsationen auch in Zukunft reichen.")
+    st.sidebar.markdown("# Infos ")
+    st.sidebar.markdown(":warning: Diese App erhebt keinerlei Anspruch auf Korrektheit und basiert auf z.T. unrealistischen Annahmen.")
+    st.sidebar.markdown("Diese App versucht Ihnen zu ermöglichen anhand von Daten und Annahmen vorauszusagen, ob die Betten in den Intensivstationen auch in Zukunft reichen.")
     st.sidebar.markdown("Die Infektions-Daten kommen tagesaktuell von der [JHU CSSE](https://github.com/CSSEGISandData/COVID-19).")
-    st.sidebar.markdown("Die Schätzung der verfügbaren Betten in Europa stammt aus [akademischen Journals](https://link.springer.com/article/10.1007/s00134-012-2627-8). Die durchschnittliche Hospitalisierungsrate [erklärt Harald Lesch](https://youtu.be/Fx11Y4xjDwA). Die  Intensivstation-Quote wird anhand der [italientischen Daten](https://de.wikipedia.org/wiki/COVID-19-Pandemie_in_Italien#Einfluss_von_Alter%2C_Geschlecht_und_Vorerkrankungen_auf_Sterblichkeit) mit 1 Prozent geschätzt. ")
-    st.sidebar.markdown("Bei der Voraussage wird ein logistisches Wachstum mit Kapazitätsgrenze angenommen (siehe Schritt 3).")
-    st.sidebar.markdown("Es wird angenommen, dass hospitalisierte Infizierte gleichmässig auf alle Intensivstationen des Landes verteilt werden können.")
+    st.sidebar.markdown("Die Schätzung der verfügbaren Betten in Europa stammt aus [akademischen Journals](https://link.springer.com/article/10.1007/s00134-012-2627-8). Die durchschnittliche Hospitalisierungsrate [erklärt Harald Lesch](https://youtu.be/Fx11Y4xjDwA). Die  Intensivstation-Quote wird anhand der [italienischen Daten](https://de.wikipedia.org/wiki/COVID-19-Pandemie_in_Italien#Einfluss_von_Alter%2C_Geschlecht_und_Vorerkrankungen_auf_Sterblichkeit) mit 1 Prozent geschätzt. ")
+    st.sidebar.markdown("Bei der Voraussage wird ein logistisches Wachstum mit Kapazitätsgrenze angenommen (siehe Schritt 4).")
+    st.sidebar.markdown("Es wird unrealistischer Weise angenommen, dass hospitalisierte Infizierte gleichmässig auf alle Intensivstationen des Landes verteilt werden können.")
+    st.sidebar.markdown("Die Dunkelziffer der Infektionen kann um ein vielfaches höher als die positiv getesteten Fälle sein.")
+    st.sidebar.markdown("Es wird unrealistischer Weise angenommen, dass alle Intensiv-Betten durch Corona Patienten belegt werden.")
+    st.sidebar.markdown(":warning: [staythefuckhome](https://twitter.com/hashtag/staythefuckhome)")
     st.sidebar.markdown("Autor: :blond-haired-man: plotti@gmx.net [Github](https://github.com/plotti/corona)")
     country_loc = st.selectbox("Land",tuple(INFOS["names"].values()),index=tuple(INFOS["names"].keys()).index("Switzerland"))
     country = reverse_countries[country_loc]
@@ -117,9 +121,9 @@ def main():
     percentage = st.slider('Schritt 2 - Passen Sie an: Wieviel Prozent aller Neuinfizierten müssen in %s auf die Intensivstation? ' % country_loc, 0, 5, 1)
     duration = st.slider('Schritt 3 - Passen Sie an: Wie viele Tage verbleiben Personen auf der Intensivstation? ', 2, 14, 10)
     most_current_date, cases_up_till_today = get_cases_to_date(df_raw,country)
-    max_cases = st.slider('Schritt 4 - Passen Sie an: Wieviele Infektionen wird es insgesammt in %s geben? (Stand %s %s: %s)' % (country_loc,country_loc,most_current_date.strftime("%d.%m.%y"),cases_up_till_today), int(cases_up_till_today), int(3*cases_up_till_today), int(cases_up_till_today*1.5))
+    max_cases = st.slider('Schritt 4 - Passen Sie an: Wie viele Infektionen wird es insgesamt in %s geben? (Stand %s %s: %s)' % (country_loc,country_loc,most_current_date.strftime("%d.%m.%y"),cases_up_till_today), int(cases_up_till_today), int(3*cases_up_till_today), int(cases_up_till_today*1.5))
     if st.button('Berechnung beginnen'):
-        with st.spinner('Vorausage wird berechnet.'):
+        with st.spinner('Vo­r­aus­sa­ge wird berechnet.'):
             df = df_raw
             df = pd.DataFrame(df[df["Country/Region"] == country].head(1))
             df = df.T.iloc[4:].reset_index()
@@ -186,7 +190,7 @@ def plot_infections(dataframe):
         line=dict(color='rgb(31, 119, 180)'))
     
     trace2 = go.Scatter(
-        name='Vorausage Summe der Infektionen',
+        name='Vo­r­aus­sa­ge: Summe der Infektionen',
         x=dataframe['ds'],
         y=dataframe["yhat"],
         mode='lines',
@@ -200,7 +204,7 @@ def plot_infections(dataframe):
         line=dict(color='rgb(0, 0, 0)'))
     
     trace4 = go.Scatter(
-        name='Vorausage neuer Infektionen pro Tag',
+        name='Vo­r­aus­sa­ge: Neue Infektionen pro Tag',
         x=dataframe['ds'],
         y=dataframe["day2day"],
         mode='lines',
@@ -242,21 +246,21 @@ def plot_hospital_beds(dataframe,max_hospitalbeds,duration,percentage):
     #https://community.plot.ly/t/fill-area-upper-to-lower-bound-in-continuous-error-bars/19168
 
     trace4 = go.Scatter(
-        name='Vorausage neuer Infektionen pro Tag die auf die Intensivstation müssen',
+        name='Vo­r­aus­sa­ge: Neue Patienten pro Tag, die auf die Intensivstation müssen.',
         x=dataframe['ds'],
         y=dataframe["day2day"],
         mode='lines',
         line=dict(color='rgb(20, 40, 120)'))
 
     trace5 = go.Scatter(
-        name='Summe Patienten die mind. %s Tage auf der Intensivstation bleiben müssen' % duration,
+        name='Vo­r­aus­sa­ge: Summe belegter Betten durch Patienten die mind. %s Tage auf der Intensivstation bleiben müssen.' % duration,
         x=dataframe['ds'],
         y=dataframe["day2daysum"],
         mode='lines',
         line=dict(color='rgb(170, 120, 120)'))
 
     trace6 = go.Scatter(
-        name='Kapazitätsgrenze Intensivstationen',
+        name='Anzahl total verfügbarer Betten auf Intensivstationen',
         x=dataframe['ds'],
         y=[max_hospitalbeds for i in range(0,len(dataframe))],
         mode='lines',

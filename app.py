@@ -104,7 +104,7 @@ def main():
     st.sidebar.markdown("# Infos")
     st.sidebar.markdown("Diese App ermöglicht es Ihnen Annahmen zu treffen und aufgrund derer vorauszuagen, ob die Betten in den Intensivsationen auch in Zukunft reichen.")
     st.sidebar.markdown("Die Infektions-Daten kommen tagesaktuell von der [JHU CSSE](https://github.com/CSSEGISandData/COVID-19).")
-    st.sidebar.markdown("Die Schätzung der verfügbaren Betten in Europa stammt aus [akademischen Journals](https://link.springer.com/article/10.1007/s00134-012-2627-8). Die durchschnittliche Hospitalisierungsrate [erklärt Harald Lesch](https://youtu.be/Fx11Y4xjDwA).")
+    st.sidebar.markdown("Die Schätzung der verfügbaren Betten in Europa stammt aus [akademischen Journals](https://link.springer.com/article/10.1007/s00134-012-2627-8). Die durchschnittliche Hospitalisierungsrate [erklärt Harald Lesch](https://youtu.be/Fx11Y4xjDwA). Die  Intensivstation-Quote wird anhand der [italientischen Daten](https://de.wikipedia.org/wiki/COVID-19-Pandemie_in_Italien#Einfluss_von_Alter%2C_Geschlecht_und_Vorerkrankungen_auf_Sterblichkeit) mit 1 Prozent geschätzt. ")
     st.sidebar.markdown("Bei der Voraussage wird ein logistisches Wachstum mit Kapazitätsgrenze angenommen (siehe Schritt 3).")
     st.sidebar.markdown("Es wird angenommen, dass hospitalisierte Infizierte gleichmässig auf alle Intensivstationen des Landes verteilt werden können.")
     st.sidebar.markdown("Autor: :blond-haired-man: plotti@gmx.net [Github](https://github.com/plotti/corona)")
@@ -113,12 +113,11 @@ def main():
     max_hospitalbeds = st.slider('Schritt 1 - Passen Sie an: Wieviel verfügbare Intensiv-Betten hat %s ?' % country_loc, 0, int(INFOS["beds"][country]*2), int(INFOS["beds"][country]))
     #periods = st.slider('Voraussage für wieviele Tage?', 0, 50, 20)
     periods = 20
-    percentage = st.slider('Schritt 2 - Passen Sie an: Wieviel Prozent aller Infizierten müssen in %s ins Spital? (Hospitalisierungsrate)' % country_loc, 0, 20, 5)
-    max_infections  = int(max_hospitalbeds / (percentage/100))
+    #duration = 14 # 5 days in intensive care
+    percentage = st.slider('Schritt 2 - Passen Sie an: Wieviel Prozent aller Neuinfizierten müssen in %s auf die Intensivstation? ' % country_loc, 0, 5, 1)
+    duration = st.slider('Schritt 3 - Passen Sie an: Wie viele Tage verbleiben Personen auf der Intensivstation? ', 2, 14, 10)
     most_current_date, cases_up_till_today = get_cases_to_date(df_raw,country)
-    st.info("Bei %s Prozent Hospitalisierungsrate ist ab ** %s ** Infektionen die Kapazität der Spitäler überschritten." % (percentage,max_infections))
-    max_cases = st.slider('Schritt 3 - Passen Sie an: Wieviele Infektionen wird es insgesammt in %s geben? (Stand %s %s: %s)' % (country_loc,country_loc,most_current_date.strftime("%d.%m.%y"),cases_up_till_today), int(max_infections), int(3*max_infections), int(max_infections*1.5))
-
+    max_cases = st.slider('Schritt 4 - Passen Sie an: Wieviele Infektionen wird es insgesammt in %s geben? (Stand %s %s: %s)' % (country_loc,country_loc,most_current_date.strftime("%d.%m.%y"),cases_up_till_today), int(cases_up_till_today), int(3*cases_up_till_today), int(cases_up_till_today*1.5))
     if st.button('Berechnung beginnen'):
         with st.spinner('Vorausage wird berechnet.'):
             df = df_raw
@@ -132,8 +131,8 @@ def main():
             df['ds'] = df['ds'].astype('datetime64[ns]')
             result = predict(df,periods,max_cases)
             result = pd.merge(df,result,on="ds",how="right")[["ds","y","yhat",'yhat_lower', 'yhat_upper',"cap_y"]]
-            plot_volatility(result,max_infections)
-            #st.balloons()
+            plot_infections(result)
+            plot_hospital_beds(result,max_hospitalbeds,duration,percentage)
     else:
         st.write('')
 
@@ -146,8 +145,14 @@ def predict(df,periods,max_cases):
     forecast = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper',"cap"]]
     return forecast
 
-def plot_volatility(dataframe,max_infections):
-    #https://community.plot.ly/t/fill-area-upper-to-lower-bound-in-continuous-error-bars/19168
+def plot_infections(dataframe):
+    for index,row in dataframe.iterrows():
+        if pd.isnull(row.y):
+            dataframe.loc[index,"y_merge"] = row.yhat
+        else:
+            dataframe.loc[index,"y_merge"] = row.y
+    dataframe["day2day"] = dataframe["y_merge"].diff().rolling(3).mean()
+
     upper_bound = go.Scatter(
         name='Obere Schätzung',
         x=dataframe['ds'],
@@ -181,35 +186,94 @@ def plot_volatility(dataframe,max_infections):
         line=dict(color='rgb(31, 119, 180)'))
     
     trace2 = go.Scatter(
-        name='Vorausage der Infektionen',
+        name='Vorausage Summe der Infektionen',
         x=dataframe['ds'],
-        y=dataframe['yhat'],
+        y=dataframe["yhat"],
         mode='lines',
         line=dict(color='rgb(246, 23, 26)'))
     
     trace3 = go.Scatter(
-        name='Ihre Annahme: Totale Infektionen',
+        name='Ihre Annahme: Summe totale Infektionen',
         x=dataframe['ds'],
         y=dataframe['cap_y'],
         mode='lines',
         line=dict(color='rgb(0, 0, 0)'))
-
+    
     trace4 = go.Scatter(
-        name='Kapazitätsgrenze Spitäler',
+        name='Vorausage neuer Infektionen pro Tag',
         x=dataframe['ds'],
-        y=[max_infections for i in range(0,len(dataframe))],
+        y=dataframe["day2day"],
         mode='lines',
-        line=dict(color='rgb(50, 280, 40)'))
+        line=dict(color='rgb(20, 40, 120)'))
 
-    data = [lower_bound, upper_bound,trace1, trace2,trace3,trace4]
+    data = [lower_bound,upper_bound,trace1,trace2,trace3,trace4]
 
     layout = go.Layout(
         title='Voraussage über die Anzahl an Infektionen',
         hovermode = 'closest',
         xaxis=dict(
             type='date'
-        ),     
-        margin=dict(l=20, r=0, t=100, b=0),
+        ),   
+        yaxis=dict(
+            title='Infizierte Personen'
+        ),  
+        margin=dict(l=40, r=60, t=100, b=0),
+        legend=dict(orientation="h"),
+        showlegend = True)
+    fig = go.Figure(data=data, layout=layout)
+    fig.layout.update(legend=dict(orientation="h"),
+        plot_bgcolor='rgb(255,255,255)',
+        separators=",.",
+        dragmode=False,)
+    return st.plotly_chart(fig,responsive= True)
+
+
+def plot_hospital_beds(dataframe,max_hospitalbeds,duration,percentage):
+
+    #compute day2day numbers merge prediction with history
+    for index,row in dataframe.iterrows():
+        if pd.isnull(row.y):
+            dataframe.loc[index,"y_merge"] = row.yhat
+        else:
+            dataframe.loc[index,"y_merge"] = row.y
+    dataframe["day2day"] = dataframe["y_merge"].diff().rolling(2).mean()*(percentage/100)
+    dataframe["day2daysum"] = dataframe["y_merge"].diff().rolling(duration).sum()*(percentage/100)
+
+    #https://community.plot.ly/t/fill-area-upper-to-lower-bound-in-continuous-error-bars/19168
+
+    trace4 = go.Scatter(
+        name='Vorausage neuer Infektionen pro Tag die auf die Intensivstation müssen',
+        x=dataframe['ds'],
+        y=dataframe["day2day"],
+        mode='lines',
+        line=dict(color='rgb(20, 40, 120)'))
+
+    trace5 = go.Scatter(
+        name='Summe Patienten die mind. %s Tage auf der Intensivstation bleiben müssen' % duration,
+        x=dataframe['ds'],
+        y=dataframe["day2daysum"],
+        mode='lines',
+        line=dict(color='rgb(170, 120, 120)'))
+
+    trace6 = go.Scatter(
+        name='Kapazitätsgrenze Intensivstationen',
+        x=dataframe['ds'],
+        y=[max_hospitalbeds for i in range(0,len(dataframe))],
+        mode='lines',
+        line=dict(color='rgb(50, 280, 40)'))
+
+    data = [trace4,trace5,trace6]
+
+    layout = go.Layout(
+        title='Voraussage über die Anzahl Patienten auf Intensivstationen',
+        hovermode = 'closest',
+        xaxis=dict(
+            type='date'
+        ),   
+        yaxis=dict(
+            title='Personen auf Intensivstation'
+        ),  
+        margin=dict(l=40, r=60, t=100, b=0),
         legend=dict(orientation="h"),
         showlegend = True)
 

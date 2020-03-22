@@ -12,6 +12,37 @@ import plotly.offline as py
 import plotly.graph_objs as go
 
 INFOS = {"inhabitants": {"Germany":80000000, "Switzerland": 6000000, "France":65000000, "Austria": 9000000, "Poland": 37000000},
+         "names": {'Andorra': "Andorra",
+                    'Austria': "Österreich",
+                    'Belgium': "Belgien",
+                    'Bulgaria': "Bulgarien",
+                    'Croatia': "Kroatien",
+                    'Cyprus': "Zypern",
+                    'Czech Republic': "Tschechien",
+                    'Denmark': "Dänemark",
+                    'Estonia': "Estonien",
+                    'Finland': "Finnland",
+                    'France': "Frankreich",
+                    'Germany': "Deutschland",
+                    'Greece': "Griechenland",
+                    'Hungary': "Ungarn",
+                    'Iceland': "Island",
+                    'Ireland': "Irland",
+                    'Italy': "Italien",
+                    'Lettland': "Litauen",
+                    'Lithuania': "Littauen",
+                    'Luxembourg': "Luxenburg",
+                    'The Netherlands': "Niederlande",
+                    'Norway': "Norwegen",
+                    'Poland': "Polen",
+                    'Portugal': "Portugal",
+                    'Romania': "Rumänien",
+                    'Slovakia': "Slovakei",
+                    'Slovenia': "Slovenien",
+                    'Spain': "Spanien",
+                    'Sweden': "Schweden",
+                    'Switzerland': "Schweiz",
+                    'UK': "Vereinigtes Königreich"},
          "beds": {'Andorra': 6,
                   'Austria': 1833,
                   'Belgium': 1755,
@@ -44,6 +75,7 @@ INFOS = {"inhabitants": {"Germany":80000000, "Switzerland": 6000000, "France":65
                   'Switzerland': 866,
                   'UK': 4114},
          "counter_measures_dates": {"Germany":dt.datetime(2020,3,14), "Switzerland": dt.datetime(2020,3,14), "France":dt.datetime(2020,3,14), "Austria": dt.datetime(2020,3,14), "Poland": dt.datetime(2020,3,14)}}
+reverse_countries = {v:k for k,v in INFOS["names"].items()}
 
 def load_data():
     df = pd.read_csv(io.StringIO(requests.get("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv").content.decode('utf-8')))
@@ -58,38 +90,50 @@ def get_beds():
     tmp = tmp[["beds"]]
     return tmp.T.to_dict("records")
 
+def get_cases_to_date(df,country):
+    df = pd.DataFrame(df[df["Country/Region"] == country].head(1))
+    df = df.T.iloc[4:].reset_index()
+    df.columns = ["ds", "y"]
+    df["ds"] = pd.to_datetime(df["ds"],infer_datetime_format=True).dt.date
+    return df.tail(1)["ds"].values[0],df.tail(1)["y"].values[0]
+
 def main():
     st.AppName = "Corona Beds"
     df_raw = load_data()
-    st.markdown("# Corona - Wie lange reichen die Betten?")
+    st.markdown("# :hospital: Corona - Wie lange reichen die Betten in den Intensivstationen?")
     st.sidebar.markdown("# Infos")
     st.sidebar.markdown("### Diese App versucht vorauszuagen ob die Krankenhausbetten bei aktueller Ansteckungsquote auch in Zukunft reichen.")
-    st.sidebar.markdown("Die Infektions-Daten kommen tagesaktuell von der [JHU CSSE](https://github.com/CSSEGISandData/COVID-19)")
-    st.sidebar.markdown("Die Schätzung der verfügbaren Betten in Europa wurde [hier](https://link.springer.com/article/10.1007/s00134-012-2627-8) entommen. Die durchschnittliche Hospitalisierungsquote [hier](https://youtu.be/Fx11Y4xjDwA).")
+    st.sidebar.markdown("Die Infektions-Daten kommen tagesaktuell von der [JHU CSSE](https://github.com/CSSEGISandData/COVID-19).")
+    st.sidebar.markdown("Die Schätzung der verfügbaren Betten in Europa kommen von [akademischen Journals (2012)](https://link.springer.com/article/10.1007/s00134-012-2627-8). Die durchschnittliche Hospitalisierungsrate [erklärt Harald Lesch](https://youtu.be/Fx11Y4xjDwA).")
     st.sidebar.markdown("Bei der Voraussage wird ein logistisches Wachstum mit Kapazitätsgrenze (totale Anzahl Infektionen) angenommen.")
-    st.sidebar.markdown("Autor: plotti@gmx.net")
-    country = st.selectbox("Land",tuple(INFOS["beds"].keys()),index=tuple(INFOS["beds"].keys()).index("Switzerland"))
-    periods = st.slider('Voraussage für wieviele Tage?', 0, 50, 20)
-    max_hospitalbeds = st.slider('Anzahl verfügbare Betten in %s ' % country, 0, int(INFOS["beds"][country]*2), int(INFOS["beds"][country]))
-    percentage = st.slider('Wieviel Prozent aller Infizierten müssen ins Spital? (Hospitalisierungsquote)', 0, 20, 5)
+    st.sidebar.markdown("Wir nehmen an, dass sich die Infektion gleichmäßig über das gesamte Land ausbreitet und nicht konzentriert ist wie z.B. in Nortitalien.")
+    st.sidebar.markdown("Autor: :blond-haired-man: plotti@gmx.net [Github](https://github.com/plotti/corona)")
+    country_loc = st.selectbox("Land",tuple(INFOS["names"].values()),index=tuple(INFOS["names"].keys()).index("Switzerland"))
+    country = reverse_countries[country_loc]
+    max_hospitalbeds = st.slider('Schritt 1 - Passen Sie an: Wieviel verfügbare Intensiv-Betten hat %s ?' % country_loc, 0, int(INFOS["beds"][country]*2), int(INFOS["beds"][country]))
+    #periods = st.slider('Voraussage für wieviele Tage?', 0, 50, 20)
+    periods = 20
+    percentage = st.slider('Schritt 2 - Passen Sie an: Wieviel Prozent aller Infizierten müssen in %s ins Spital? (Hospitalisierungsrate)' % country_loc, 0, 20, 5)
     max_infections  = int(max_hospitalbeds / (percentage/100))
-    st.markdown("Maximal mögliche Anzahl an infizierten Fälle bei %s Prozent Hospitalisierungsquote: ** %s ** " % (percentage,max_infections))
-    max_cases = st.slider('Ihre Annahme: Geschätzte totale Anzahl an Infektionen in %s ' % country, max_infections, int(3*max_infections), int(max_infections*1.5))
+    most_current_date, cases_up_till_today = get_cases_to_date(df_raw,country)
+    st.info("Bei %s Prozent Hospitalisierungsquote ist ab ** %s ** Infektionen die Kapazität der Spitäler überschritten." % (percentage,max_infections))
+    max_cases = st.slider('Schritt 3: Passen Sie an: Wieviele Infektionen wird es insgesammt in %s geben? (Stand %s %s: %s)' % (country_loc,country_loc,most_current_date.strftime("%d.%m.%y"),cases_up_till_today), int(max_infections*0.5), int(3*max_infections), int(max_infections*1.5))
 
     if st.button('Berechnung beginnen'):
-        df = df_raw
-        df = pd.DataFrame(df[df["Country/Region"] == country].head(1))
-        df = df.T.iloc[4:].reset_index()
-        df.columns = ["ds", "y"]
-        df["ds"] = pd.to_datetime(df["ds"],infer_datetime_format=True).dt.date
-        df = df[df["y"]>0]
-        df.reset_index(drop=True)
-        df["cap"] = max_cases
-        df['ds'] = df['ds'].astype('datetime64[ns]')
-        result = predict(df,periods,max_cases)
-        result = pd.merge(df,result,on="ds",how="right")[["ds","y","yhat",'yhat_lower', 'yhat_upper',"cap_y"]]
-        plot_volatility(result,max_infections)
-        #st.balloons()
+        with st.spinner('Vorausage wird berechnet.'):
+            df = df_raw
+            df = pd.DataFrame(df[df["Country/Region"] == country].head(1))
+            df = df.T.iloc[4:].reset_index()
+            df.columns = ["ds", "y"]
+            df["ds"] = pd.to_datetime(df["ds"],infer_datetime_format=True).dt.date
+            df = df[df["y"]>0]
+            df.reset_index(drop=True)
+            df["cap"] = max_cases
+            df['ds'] = df['ds'].astype('datetime64[ns]')
+            result = predict(df,periods,max_cases)
+            result = pd.merge(df,result,on="ds",how="right")[["ds","y","yhat",'yhat_lower', 'yhat_upper',"cap_y"]]
+            plot_volatility(result,max_infections)
+            #st.balloons()
     else:
         st.write('')
 

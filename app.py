@@ -102,11 +102,11 @@ def main():
     df_raw = load_data()
     st.markdown("# :hospital: Corona - Wie lange reichen die Betten in den Intensivstationen?")
     st.sidebar.markdown("# Infos")
-    st.sidebar.markdown("### Diese App versucht vorauszuagen ob die Krankenhausbetten bei aktueller Ansteckungsquote auch in Zukunft reichen.")
+    st.sidebar.markdown("Diese App ermöglicht es Ihnen Annahmen zu treffen und aufgrund derer vorauszuagen, ob die Betten in den Intensivsationen auch in Zukunft reichen.")
     st.sidebar.markdown("Die Infektions-Daten kommen tagesaktuell von der [JHU CSSE](https://github.com/CSSEGISandData/COVID-19).")
-    st.sidebar.markdown("Die Schätzung der verfügbaren Betten in Europa kommen von [akademischen Journals (2012)](https://link.springer.com/article/10.1007/s00134-012-2627-8). Die durchschnittliche Hospitalisierungsrate [erklärt Harald Lesch](https://youtu.be/Fx11Y4xjDwA).")
-    st.sidebar.markdown("Bei der Voraussage wird ein logistisches Wachstum mit Kapazitätsgrenze (totale Anzahl Infektionen) angenommen.")
-    st.sidebar.markdown("Wir nehmen an, dass sich die Infektion gleichmäßig über das gesamte Land ausbreitet und nicht konzentriert ist wie z.B. in Nortitalien.")
+    st.sidebar.markdown("Die Schätzung der verfügbaren Betten in Europa stammt aus [akademischen Journals](https://link.springer.com/article/10.1007/s00134-012-2627-8). Die durchschnittliche Hospitalisierungsrate [erklärt Harald Lesch](https://youtu.be/Fx11Y4xjDwA).")
+    st.sidebar.markdown("Bei der Voraussage wird ein logistisches Wachstum mit Kapazitätsgrenze angenommen (siehe Schritt 3).")
+    st.sidebar.markdown("Es wird angenommen, dass hospitalisierte Infizierte gleichmässig auf alle Intensivstationen des Landes verteilt werden können.")
     st.sidebar.markdown("Autor: :blond-haired-man: plotti@gmx.net [Github](https://github.com/plotti/corona)")
     country_loc = st.selectbox("Land",tuple(INFOS["names"].values()),index=tuple(INFOS["names"].keys()).index("Switzerland"))
     country = reverse_countries[country_loc]
@@ -116,7 +116,7 @@ def main():
     percentage = st.slider('Schritt 2 - Passen Sie an: Wieviel Prozent aller Infizierten müssen in %s ins Spital? (Hospitalisierungsrate)' % country_loc, 0, 20, 5)
     max_infections  = int(max_hospitalbeds / (percentage/100))
     most_current_date, cases_up_till_today = get_cases_to_date(df_raw,country)
-    st.info("Bei %s Prozent Hospitalisierungsquote ist ab ** %s ** Infektionen die Kapazität der Spitäler überschritten." % (percentage,max_infections))
+    st.info("Bei %s Prozent Hospitalisierungsrate ist ab ** %s ** Infektionen die Kapazität der Spitäler überschritten." % (percentage,max_infections))
     max_cases = st.slider('Schritt 3: Passen Sie an: Wieviele Infektionen wird es insgesammt in %s geben? (Stand %s %s: %s)' % (country_loc,country_loc,most_current_date.strftime("%d.%m.%y"),cases_up_till_today), int(max_infections*0.5), int(3*max_infections), int(max_infections*1.5))
 
     if st.button('Berechnung beginnen'):
@@ -206,36 +206,18 @@ def plot_volatility(dataframe,max_infections):
         title='Voraussage über die Anzahl an Infektionen',
         hovermode = 'closest',
         xaxis=dict(
-            rangeselector=dict(
-                buttons=list([
-                    dict(count=10,
-                         label='Letzte 10 Tage',
-                         step='day',
-                         stepmode='todate'),
-                    dict(count=15,
-                         label='Letzte 15 Tage',
-                         step='day',
-                         stepmode='todate'),
-                    dict(count=30,
-                         label='Letzte 30 Tage',
-                         step='day',
-                         stepmode='todate'),
-                    dict(step='all')
-                ])
-            ),          
-            rangeslider=dict(
-                visible = False
-            ),
             type='date'
         ),     
+        margin=dict(l=20, r=0, t=100, b=0),
         legend=dict(orientation="h"),
         showlegend = True)
 
     fig = go.Figure(data=data, layout=layout)
     fig.layout.update(legend=dict(orientation="h"),
+        plot_bgcolor='rgb(255,255,255)',
         separators=",.",
         dragmode=False,)
-    return st.plotly_chart(fig)
+    return st.plotly_chart(fig,responsive= True)
 
 if __name__ == "__main__":
     main()

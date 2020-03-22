@@ -100,7 +100,7 @@ def get_cases_to_date(df,country):
 def main():
     st.AppName = "Corona Beds"
     df_raw = load_data()
-    st.markdown("# :hospital: Corona - Wie lange reichen die Betten in den Intensivstationen?")
+    st.markdown("# :hospital: COVID-19 - Wie lange reichen die Betten in den Intensivstationen?")
     st.sidebar.markdown("# Infos ")
     st.sidebar.markdown(":warning: Diese App erhebt keinerlei Anspruch auf Korrektheit und basiert auf z.T. unrealistischen Annahmen.")
     st.sidebar.markdown("Diese App versucht Ihnen zu ermöglichen anhand von Daten und Annahmen vorauszusagen, ob die Betten in den Intensivstationen auch in Zukunft reichen.")

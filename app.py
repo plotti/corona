@@ -12,7 +12,7 @@ import plotly.offline as py
 import plotly.graph_objs as go
 import posthog 
 
-posthog.api_key = 'HGofPqwl6U5VgDtx_eO-M5kbH4PVBQSSd5U9g60A3Eg'
+posthog.api_key = "BpzsDfpzlIZiAWLvdEt-3zReZXheDKtUmLXaTkVKnTg"#'HGofPqwl6U5VgDtx_eO-M5kbH4PVBQSSd5U9g60A3Eg'
 
 INFOS = {"inhabitants": {"Germany":80000000, "Switzerland": 6000000, "France":65000000, "Austria": 9000000, "Poland": 37000000},
          "names": {'Andorra': "Andorra", 'Austria': "Österreich", 'Belgium': "Belgien", 'Bulgaria': "Bulgarien",
@@ -52,6 +52,7 @@ def get_cases_to_date(df,country):
 
 def main():
     posthog.capture('distinct id', 'movie played', {'movie_id': '123', 'category': 'romcom'})
+    posthog.capture('distinct id', '$pageview', {'$current_url': 'https://corona-beds.herokuapp.com/'})
     st.AppName = "Corona Beds"
     df_raw = load_data()
     st.markdown("# :hospital: COVID-19 - Wie lange reichen die Betten in den Intensivstationen?")

@@ -10,6 +10,9 @@ import requests
 from matplotlib import pyplot as plt
 import plotly.offline as py
 import plotly.graph_objs as go
+import posthog 
+
+posthog.api_key = 'HGofPqwl6U5VgDtx_eO-M5kbH4PVBQSSd5U9g60A3Eg'
 
 INFOS = {"inhabitants": {"Germany":80000000, "Switzerland": 6000000, "France":65000000, "Austria": 9000000, "Poland": 37000000},
          "names": {'Andorra': "Andorra", 'Austria': "Österreich", 'Belgium': "Belgien", 'Bulgaria': "Bulgarien",
@@ -48,6 +51,7 @@ def get_cases_to_date(df,country):
     return df.tail(1)["ds"].values[0],df.tail(1)["y"].values[0]
 
 def main():
+    posthog.capture('distinct id', 'movie played', {'movie_id': '123', 'category': 'romcom'})
     st.AppName = "Corona Beds"
     df_raw = load_data()
     st.markdown("# :hospital: COVID-19 - Wie lange reichen die Betten in den Intensivstationen?")

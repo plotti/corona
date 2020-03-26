@@ -31,7 +31,7 @@ INFOS = {"inhabitants": {"Germany":80000000, "Switzerland": 6000000, "France":65
 reverse_countries = {v:k for k,v in INFOS["names"].items()}
 
 def load_data():
-    df = pd.read_csv(io.StringIO(requests.get("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv").content.decode('utf-8')))
+    df = pd.read_csv(io.StringIO(requests.get("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv").content.decode('utf-8')))
     return df
 
 def get_beds():

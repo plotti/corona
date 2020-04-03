@@ -44,7 +44,8 @@ def get_beds():
     return tmp.T.to_dict("records")
 
 def get_cases_to_date(df,country):
-    df = pd.DataFrame(df[df["Country/Region"] == country].head(1))
+    #df = pd.DataFrame(df[df["Country/Region"] == country].head(1))
+    df = df[(df["Country/Region"] == country) & (df["Province/State"].isnull())].head(1)
     df = df.T.iloc[4:].reset_index()
     df.columns = ["ds", "y"]
     df["ds"] = pd.to_datetime(df["ds"],infer_datetime_format=True).dt.date
@@ -80,7 +81,8 @@ def main():
     if st.button('Berechnung beginnen'):
         with st.spinner('Vo­r­aus­sa­ge wird berechnet.'):
             df = df_raw
-            df = pd.DataFrame(df[df["Country/Region"] == country].head(1))
+            #df = pd.DataFrame(df[df["Country/Region"] == country].head(1))
+            df = df[(df["Country/Region"] == country) & (df["Province/State"].isnull())].head(1)
             df = df.T.iloc[4:].reset_index()
             df.columns = ["ds", "y"]
             df["ds"] = pd.to_datetime(df["ds"],infer_datetime_format=True).dt.date
